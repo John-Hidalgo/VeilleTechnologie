@@ -90,7 +90,7 @@ def VersVoix():
         
     reponseEcho = reponseContent.replace('\n', ' ')
 
-    commande = f'echo "{reponseEcho}" | piper\\piper.exe -m piper\\en_US-kristin-medium.onnx -f rec2.wav -q'
+    commande = f'echo "{reponseEcho}" | piper\\piper.exe -m piper\\fr_FR-tom-medium.onnx -f rec2.wav -q'
     process = subprocess.Popen(commande, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     process.wait()
     voix = AudioSegment.from_wav('rec2.wav')
