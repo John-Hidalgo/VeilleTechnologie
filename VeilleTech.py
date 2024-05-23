@@ -8,27 +8,52 @@ import subprocess
 from pydub import AudioSegment
 from pydub.playback import play
 
+import numpy as np
+
+def is_silent(data, threshold=500):
+    audio_data = np.frombuffer(data, dtype=np.int16)
+    return np.abs(audio_data).mean() < threshold
+
 def InvitesCommencer():
-    print("Veuillez appuyer sur 'r' pour commencer l'enregistrement")
+    print("Please press 'r' to begin recording")
     while True:
         if keyboard.is_pressed('r'):
             break
         
-def Enregistrer(fichier):
-    CHUNK = 1024
+def InvitesArreter():
+    print("Now recording ... please press 's' when you've finished")
+    while True:
+        if keyboard.is_pressed('s'):
+            break
+    
+def Enregistrer(fichier, silence_limit=2):
+    CHUNK = 512
     FORMAT = pyaudio.paInt16
     CHANNELS = 1
     RATE = 44100
+    SILENCE_THRESHOLD = 500
+    SILENCE_CHUNKS = int(RATE / CHUNK * silence_limit)
 
     audio = pyaudio.PyAudio()
     stream = audio.open(format=FORMAT, channels=CHANNELS, rate=RATE, input=True, frames_per_buffer=CHUNK)
     frames = []
 
-    print("En cours d'enregistrement... veuillez appuyer sur 's' lorsque vous avez terminé")
+    print("Now recording ... press 's' to stop manually or stop talking to end recording.")
 
-    while not keyboard.is_pressed('s'):
+    silent_chunks = 0
+    while True:
+        if keyboard.is_pressed('s'):
+            break
         data = stream.read(CHUNK)
         frames.append(data)
+        
+        if is_silent(data, SILENCE_THRESHOLD):
+            silent_chunks += 1
+        else:
+            silent_chunks = 0
+        
+        if silent_chunks > SILENCE_CHUNKS:
+            break
 
     stream.stop_stream()
     stream.close()
