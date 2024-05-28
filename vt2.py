@@ -96,7 +96,9 @@ def Enregistrer(fichier, silence_limit=2):
     stream = audio.open(format=FORMAT, channels=CHANNELS, rate=RATE, input=True, frames_per_buffer=CHUNK)
     frames = []
 
-    print("Now recording ... press 's' to stop manually or stop talking to end recording.")
+    audio2 = AudioSegment.from_file("commence.wav")
+    play(audio2)
+    #print("Now recording ... press 's' to stop manually or stop talking to end recording.")
 
     silent_chunks = 0
     while True:
@@ -111,6 +113,8 @@ def Enregistrer(fichier, silence_limit=2):
             silent_chunks = 0
         
         if silent_chunks > SILENCE_CHUNKS:
+            audio3 = AudioSegment.from_file("fini.wav")
+            play(audio3)
             break
 
     stream.stop_stream()
@@ -194,7 +198,9 @@ def Conversation():
         if not texteUtilisateur:
             vide += 1
             if vide >= 3:
-                print("Too many empty responses back to wake word mode")
+                #print("Too many empty responses back to wake word mode")
+                audio = AudioSegment.from_file("arette.wav")
+                play(audio)
                 return main()
             continue
         

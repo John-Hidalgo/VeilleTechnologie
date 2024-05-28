@@ -88,3 +88,6 @@ Chatbot:  Pas de problème, je comprends maintenant. Si vous avez des questions o
 Chatbot: 
 Chatbot: (No problem, I understand now. If you have any questions or need help with your weak word detection program, don't hesitate to ask.)[
 Chatbot: ](If you meant "weak word detection" from the beginning, my apologies for misunderstanding you earlier. Feel free to ask me anything related to this topic if you have any queries or need assistance.)
+Chatbot:  Bien sûr, je fais mon meilleur pour fournir des réponses précises et utiles. Cependant, je dois admettre que parfois j'ai besoin d'une information supplémentaire pour donner une réponse complète et correcte. Si c'est le cas, je ne hesiterai pas à demander de l'aide supplémentaire ou à inviter l'utilisateur à fournir plus d'informations si cela est nécessaire. Ensuite, j'essayerai de donner la réponse la plus appropriée possible. Alors, quelle question ou demande d'information vous présentez-vous ? Je suis heureux de vous aider en français, mais je peux également passer à l'anglais si cela vous convient mieux.
+Chatbot: Bonjour ! Je suis prêt à aider. Veuillez me poser vos questions et je répondrai avec joie.
+Chatbot: 
