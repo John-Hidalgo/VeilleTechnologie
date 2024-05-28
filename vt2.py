@@ -9,16 +9,81 @@ from pydub import AudioSegment
 from pydub.playback import play
 import numpy as np
 
-def is_silent(data, threshold=500):
-    audio_data = np.frombuffer(data, dtype=np.int16)
-    return np.abs(audio_data).mean() < threshold
 
-def InvitesCommencer():
-    print("Please press 'r' to begin recording")
+def is_silent(donees, threshold=800):
+    audio_donees = np.frombuffer(donees, dtype=np.int16)
+    return np.abs(audio_donees).mean() < threshold
+
+def EnregistrerPourReveille(filename, silence_limit=2):
+    CHUNK = 206
+    FORMAT = pyaudio.paInt16
+    CHANNELS = 1
+    RATE = 44100
+    SILENCE_THRESHOLD = 800
+    SILENCE_CHUNKS = int(RATE / CHUNK * silence_limit)
+    PRE_NOISE_CHUNKS = int(RATE / CHUNK * 2)
+
+    audio = pyaudio.PyAudio()
+    stream = audio.open(format=FORMAT, channels=CHANNELS, rate=RATE, input=True, frames_per_buffer=CHUNK)
+    frames = []
+
+    print("Now listening for the wake word")
+
+    silence = 0
+    voix = False
+    sonAvant = []
+
     while True:
-        if keyboard.is_pressed('r'):
-            break
-    
+        donees = stream.read(CHUNK)
+
+        if is_silent(donees, SILENCE_THRESHOLD):
+            silence += 1
+            if voix:
+                if len(sonAvant) < PRE_NOISE_CHUNKS:
+                    sonAvant.append(donees)
+        else:
+            silence = 0
+            voix = True
+            frames.append(donees)
+
+        if voix and silence > SILENCE_CHUNKS:
+            stream.stop_stream()
+            stream.close()
+            audio.terminate()
+
+            wf = wave.open(filename, 'wb')
+            wf.setnchannels(CHANNELS)
+            wf.setsampwidth(audio.get_sample_size(FORMAT))
+            wf.setframerate(RATE)
+            wf.writeframes(b''.join(sonAvant))
+            wf.writeframes(b''.join(frames))
+            wf.close()
+
+            return True
+
+    return False
+
+def durationAudio(filename):
+    with wave.open(filename, 'rb') as wf:
+        frames = wf.getnframes()
+        rate = wf.getframerate()
+        duration = frames / float(rate)
+    return duration
+
+def versTextReveille(filename, max_duration=3):
+    try:
+        duration = durationAudio(filename)
+        if duration > max_duration:
+            #print("Audio file duration exceeds maximum duration. Skipping transcription.")
+            return None
+
+        model = whisper.load_model("base")
+        result = model.transcribe(filename)
+        return result["text"]
+    except Exception as e:
+        print("Error during transcription:", e)
+        return None
+
 def Enregistrer(fichier, silence_limit=2):
     CHUNK = 1024
     FORMAT = pyaudio.paInt16
@@ -115,14 +180,13 @@ def VersVoix():
     play(voix)
     os.remove('rec2.wav')
     os.remove('reponse.txt')
-
+    
 def Conversation():
     histoire = []
     prompteAuLLM = OuvrirFichier("prompt.txt")
     vide = 0
     while True:
         fichierAudio = "rec.wav"
-        # InvitesCommencer()
         Enregistrer(fichierAudio)
         texteUtilisateur = VersTexte(fichierAudio)
         os.remove(fichierAudio)
@@ -131,17 +195,28 @@ def Conversation():
             vide += 1
             if vide >= 3:
                 print("Too many empty responses back to wake word mode")
-                return Conversation()
+                return main()
             continue
         
-        print("You:", texteUtilisateur)
+        print("Vous:", texteUtilisateur)
         histoire.append({"role": "user", "content": texteUtilisateur})
-        print("LLM:")
+        print("Dragon:")
         reponse = ParlerAvecChat(texteUtilisateur, prompteAuLLM, histoire, "Chatbot")
-        error_count = 0  # Reset error count
+        vide = 0
         VersVoix()
         histoire.append({"role": "assistant", "content": reponse})
 
+def main():
+    while True:
+        voix = EnregistrerPourReveille("reveille.wav")
+        if voix:
+            transcribed_text = versTextReveille("reveille.wav")
+            if versTextReveille("reveille.wav"):
+                if "dragon" in transcribed_text.lower():
+                    print("Dragon: Oui, comment puis-je vous aider ?")
+                    audio = AudioSegment.from_file("welcome.wav")
+                    play(audio)
+                    Conversation()
 
-
-Conversation()
+if __name__ == "__main__":
+    main()
